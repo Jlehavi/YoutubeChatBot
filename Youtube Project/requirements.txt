@@ -1,0 +1,9 @@
+streamlit
+streamlit-chat
+langchain
+openai
+google-api-python-client # Google API
+google-search-results # SerpAPI
+youtube-transcript-api
+tiktoken
+faiss-cpu
