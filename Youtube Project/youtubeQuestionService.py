@@ -20,11 +20,31 @@ import textwrap
 os.environ['OPENAI_API_KEY'] = apikey
 embeddings = OpenAIEmbeddings()
 
+st.set_page_config(
+    page_title="Youtube Reader"
+)
+
+@st.cache_resource()
+def loadModel(name):
+    model = ChatOpenAI(model_name=name, temperature=0.2)
+    return model
+chat = loadModel("gpt-3.5-turbo")
+
+#Setting up Streamlit
+
 if 'generated' not in st.session_state:
     st.session_state['generated'] = []
 
 if 'past' not in st.session_state:
     st.session_state['past'] = []
+
+st.title("Youtube Video Quick Reader")
+
+st.sidebar.header("URL Input")
+url = st.sidebar.text_input("Input URL Here")
+chatButton = st.sidebar.button("Chat")
+
+#Function Declaration
 
 def createDbFromURL(vidURL):
     loader = YoutubeLoader.from_youtube_channel(vidURL)
@@ -44,8 +64,6 @@ def generateResponse(db, query, k=4):
     docs = db.similarity_search(query,k=k)
     docs_page_content = " ".join([d.page_content for d in docs])
 
-    chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2)
-
     # Template to use for the system message prompt
     template = """
         You are a helpful assistant that that can answer questions about youtube videos 
@@ -55,7 +73,7 @@ def generateResponse(db, query, k=4):
         
         If you feel like you don't have enough information to answer the question, say "I don't know".
         
-        Your answers should be verbose and detailed.
+        Your answers should be verbose and detailed. Understand you are responding to questions of the video, which the transcript details.
         """
 
     system_message_prompt = SystemMessagePromptTemplate.from_template(template)
@@ -76,18 +94,9 @@ def generateResponse(db, query, k=4):
 
 
 def setUpChat():
+    st.session_state['generated'] = []
+    st.session_state['past'] = []
     st.session_state['db'] = None
-
-#Setting up Streamlit
-
-st.set_page_config(
-    page_title="Youtube Reader"
-)
-st.title("Youtube Video Quick Reader")
-
-st.sidebar.header("URL Input")
-url = st.sidebar.text_input("Input URL Here")
-chatButton = st.sidebar.button("Chat")
 
 if chatButton and url:
     setUpChat()
